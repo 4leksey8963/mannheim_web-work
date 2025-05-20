@@ -1,0 +1,53 @@
+
+
+services:
+  php:
+    build:
+      context: ./docker/php-fpm
+    volumes:
+      - ./:/var/www  # Монтируем КОРЕНЬ проекта (где лежит src/)
+    working_dir: /var/www/src  # Теперь рабочая папка - src
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+    volumes:
+      - ./database/dumps:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  # (Опционально) Composer для управления зависимостями
+  composer:
+    image: composer:1
+    volumes:
+      - ./src:/var/www
+    working_dir: /var/www
+    networks:
+      - laravel_network
+
+  # (Опционально) PHPMyAdmin для визуального управления БД
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - mysql
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+    networks:
+      - laravel_network
+
+volumes:
+  mysql_data:  # Для сохранения данных БД между перезапусками
+
+networks:
+  laravel_network:
+    driver: bridge
