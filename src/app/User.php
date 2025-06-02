@@ -5,7 +5,7 @@ namespace App;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class User extends Authenticatable
+class User extends Authenticatable // implements JWTSubject (если бы был tymon)
 {
     use Notifiable;
 
@@ -14,8 +14,15 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $fillable = [
-        'name', 'email', 'password',
+     protected $fillable = [
+        'login',
+        'email',
+        'password', // Добавляем сюда, так как мы передаем его в User::create() после хэширования
+        'firstname',
+        'lastname',
+        'gender',
+        'city',
+        'car',
     ];
 
     /**
@@ -26,4 +33,10 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+
+    public function refreshTokens()
+    {
+        return $this->hasMany(RefreshToken::class); // Убедитесь, что App\RefreshToken существует
+    }
+
 }

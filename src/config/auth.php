@@ -42,7 +42,7 @@ return [
         ],
 
         'api' => [
-            'driver' => 'token',
+            'driver' => 'jwt_custom',
             'provider' => 'users',
         ],
     ],
@@ -98,5 +98,7 @@ return [
             'expire' => 60,
         ],
     ],
+    'jwt_access_token_ttl' => env('JWT_ACCESS_TOKEN_TTL', 3600), // 1 час
+    'jwt_refresh_token_ttl' => env('JWT_REFRESH_TOKEN_TTL', 2592000), // 30 деней
 
 ];

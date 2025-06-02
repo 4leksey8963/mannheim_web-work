@@ -1,62 +1,57 @@
-
+version: '3.8'
 
 services:
-  php:
+  php_laravel_api:
     build:
-      context: ./docker/php-fpm
+      context: ./src
+      dockerfile: ./docker/php-fpm/Dockerfile
     volumes:
-      - ./:/var/www  # Монтируем КОРЕНЬ проекта (где лежит src/)
-    working_dir: /var/www/src  # Теперь рабочая папка - src
+      - ./src:/var/www 
+    working_dir: /var/www 
     ports:
       - "8000:8000"
+    command: php artisan serve --host=0.0.0.0 --port=8000
     depends_on:
-      - mysql
+      - mysql_db
     networks:
-      - laravel_network  # Должно совпадать с сетью MySQL
+      - laravel_app_network
+    env_file: 
+      - ./src/.env 
 
-  mysql:
+  mysql_db:
     image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: laravel
-      MYSQL_USER: laravel
-      MYSQL_PASSWORD: secret
+    restart: always
+    environment: 
+
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
     volumes:
-      - mysql_data:/var/lib/mysql 
-      - ./database/dumps:/docker-entrypoint-initdb.d
+      - mysql_app_data:/var/lib/mysql
+      - ./src/database/dumps:/docker-entrypoint-initdb.d
     ports:
-      - "3306:3306"
+      - "${DB_PORT_HOST:-3306}:3306"
     networks:
-      - laravel_network  # Должно совпадать с сетью MySQL
+      - laravel_app_network
+    env_file:
+      - ./src/.env
 
-  # (Опционально) Composer для управления зависимостями
-  composer:
-    image: composer:1
-    volumes:
-      - ./src:/var/www
-    working_dir: /var/www
-    networks:
-      - laravel_network
-
-  # (Опционально) PHPMyAdmin для визуального управления БД
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
+    restart: always
     depends_on:
-      - mysql
+      - mysql_db
     ports:
-      - "8080:80"
+      - "${PMA_PORT:-8081}:80"
     environment:
-      PMA_HOST: mysql
+      PMA_HOST: mysql_db
     networks:
-      - laravel_network
+      - laravel_app_network
 
 volumes:
-  mysql_data:  # Для сохранения данных БД между перезапусками
-
-
-
-
+  mysql_app_data:
 
 networks:
-  laravel_network:
-    driver: bridge   
+  laravel_app_network:
+    driver: bridge

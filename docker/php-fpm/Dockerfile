@@ -1,18 +1,37 @@
-FROM php:7.1-fpm
+FROM php:7.4-fpm-buster
 
-RUN apt-get update && \
-    apt-get install -y \
-        git \
-        unzip \
-        libzip-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    unzip \
+    zip \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libicu-dev \
+    openssl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install \
-    pdo_mysql \
-    mbstring \
-    zip
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        mysqli \
+        mbstring \
+        tokenizer \
+        xml \
+        ctype \
+        json \
+        bcmath \
+        zip \
+        intl \
+        opcache \
+        exif \
+        gd \
+        openssl
 
-RUN php -r "copy('https://getcomposer.org/download/1.10.22/composer.phar', 'composer.phar');" && \
-    chmod +x composer.phar && \
-    mv composer.phar /usr/local/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
